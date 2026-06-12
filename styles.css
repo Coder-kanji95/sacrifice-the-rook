@@ -60,6 +60,11 @@
     justify-content: center;
 }
 
+.center {
+    width: 200px;
+    background-color: lightgreen;
+}
+
 body {
     font-family: 'Comic Neue', sans-serif;
     margin: 0;
