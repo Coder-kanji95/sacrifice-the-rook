@@ -1,0 +1,116 @@
+#result {
+    margin-top: 20px;
+    font-size: 1.5em;
+    color: #00ffff;
+}
+
+.sound-btn {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%; /* makes it circular */
+    border: none;
+    background-color: #2771deff;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Comic Neue', cursive;
+    font-size: 6em;
+    margin-bottom: 20px;
+    box-shadow: 0 0 15px #00bfff, 0 0 30px #00bfff, 0 0 45px #00bfff;
+    transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+    line-height: 90px; /* centers emoji vertically */
+}
+
+.sound-btn:hover {
+    background-color: #2771deff;
+    transform: scale(1.1); /* grow slightly on hover */
+
+    box-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 60px #00ffff;
+}
+
+.overlay {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: rgba(0, 0, 50, 0.7);
+    padding: 50px 20px;
+    box-sizing: border-box;
+}
+
+.input-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.disclaimer {
+    color: rgba(219, 21, 21, 0.76);
+    width: 400px;
+    height: 40px;
+    border-style: solid;
+    border-width: 4px;
+    border-color: #FF5733;
+    padding: 10px;
+    margin: 20px 0;
+    background-color: lightyellow;
+    font-size: 16px;
+}
+
+body {
+    font-family: 'Comic Neue', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: url('gotham-skyline.jpg') no-repeat center center fixed;
+    background-size: cover;
+    background-attachment: scroll;
+    color: #ffffff;
+    text-align: center;
+}
+
+h1 {
+    font-size: 3em;
+    color: #00bfff;
+    margin-bottom: 0.2em;
+}
+
+p {
+    font-size: 1.2em;
+    margin-bottom: 0.5em;
+}
+
+ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin: 10px auto 20px auto;
+    text-align: left;
+    display: inline-block;
+    font-size: 0.9em;
+    color: #aadfff;
+}
+
+input {
+    padding: 10px;
+    font-size: 1em;
+    font-family: "Comic Neue";
+    width: 250px;
+    border: none;
+    border-radius: 5px;
+    margin-right: 10px;
+    font-family: 'Comic Neue', cursive;
+}
+
+button {
+    padding: 10px 15px;
+    font-size: 1em;
+    background-color: #00bfff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: white;
+    font-family: 'Comic Neue', cursive;
+}
+
+button:hover {
+    background-color: #00bfff;
+}
