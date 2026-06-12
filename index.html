@@ -38,70 +38,70 @@
 
     <!--JAVASCRIPT-->
     <script>
-    function playRookSound() {
-    const audio = document.getElementById('rookSound');
-    audio.currentTime = 0;
-    audio.play().catch(err => {
-        console.log("Audio play was prevented:", err);
-    });
-    }
-
-    async function searchRookSac() {
-        const username = document.getElementById('username').value.trim();
-        const resultDiv = document.getElementById('result');
-
-        if(!username) {
-            resultDiv.textContent = "Please enter a username!";
-            return;
+        function playRookSound() {
+            const audio = document.getElementById('rookSound');
+            audio.currentTime = 0;
+            audio.play().catch(err => {
+                console.log("Audio play was prevented:", err);
+            });
         }
 
-        resultDiv.textContent = "Searching all archives... This may take a few seconds.";
+        async function searchRookSac() {
+            const username = document.getElementById('username').value.trim();
+            const resultDiv = document.getElementById('result');
 
-        try {
-            const archivesResponse = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`);
-            if(!archivesResponse.ok) throw new Error('User not found');
-            const archivesData = await archivesResponse.json();
-
-            let rookSacCount = 0;
-
-            for(const archiveUrl of archivesData.archives) {
-                const gamesResponse = await fetch(archiveUrl);
-                const gamesData = await gamesResponse.json();
-
-                for(const game of gamesData.games) {
-                    // Skip bot games
-                    if(game.white?.username?.toLowerCase().includes("bot") || game.black?.username?.toLowerCase().includes("bot")) continue;
-
-                    // Only standard chess
-                    if(game.rules !== "chess") continue;
-
-                    const pgn = game.pgn;
-                    const moves = pgn.match(/\d+\..+?\s/g);
-                    if(!moves) continue;
-
-                    moves.forEach(move => {
-                        // detect if rook is captured
-                        if(move.includes('xR')) {
-                            const nextMoveIndex = moves.indexOf(move) + 1;
-                            if(nextMoveIndex < moves.length) {
-                                const nextMove = moves[nextMoveIndex];
-                                if(!nextMove.match(/[NBRQ]/)) {
-                                    rookSacCount++;
-                                }
-                            } else {
-                                rookSacCount++;
-                            }
-                        }
-                    });
-                }
+            if(!username) {
+                resultDiv.textContent = "Please enter a username!";
+                return;
             }
 
-            resultDiv.textContent = `${username} has ${rookSacCount} rook sacrifices`;
-        } catch (err) {
-            console.error(err);
-            resultDiv.textContent = "Error fetching games. Make sure the username is correct!";
+            resultDiv.textContent = "Searching all archives... This may take a few seconds.";
+
+            try {
+                const archivesResponse = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`);
+                if(!archivesResponse.ok) throw new Error('User not found');
+                const archivesData = await archivesResponse.json();
+
+                let rookSacCount = 0;
+
+                for(const archiveUrl of archivesData.archives) {
+                    const gamesResponse = await fetch(archiveUrl);
+                    const gamesData = await gamesResponse.json();
+
+                    for(const game of gamesData.games) {
+                        // Skip bot games
+                        if(game.white?.username?.toLowerCase().includes("bot") || game.black?.username?.toLowerCase().includes("bot")) continue;
+
+                        // Only standard chess
+                        if(game.rules !== "chess") continue;
+
+                        const pgn = game.pgn;
+                        const moves = pgn.match(/\d+\..+?\s/g);
+                        if(!moves) continue;
+
+                        moves.forEach(move => {
+                            // detect if rook is captured
+                            if(move.includes('xR')) {
+                                const nextMoveIndex = moves.indexOf(move) + 1;
+                                if(nextMoveIndex < moves.length) {
+                                    const nextMove = moves[nextMoveIndex];
+                                    if(!nextMove.match(/[NBRQ]/)) {
+                                        rookSacCount++;
+                                    }
+                                } else {
+                                    rookSacCount++;
+                                }
+                            }
+                        });
+                    }
+                }
+
+                resultDiv.textContent = `${username} has ${rookSacCount} rook sacrifices`;
+            } catch (err) {
+                console.error(err);
+                resultDiv.textContent = "Error fetching games. Make sure the username is correct!";
+            }
         }
-    }
     </script>
     <!--JAVASCRIPT-->
 
