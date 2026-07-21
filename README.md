@@ -1,3 +1,5 @@
+<img width="1247" height="83" alt="image" src="https://github.com/user-attachments/assets/1e726c63-1474-40bf-98ac-2b35d1a81f85" />
+
 ## <font color="#92cddc">Welcome to the Sacrifice The ROOOOOOOOOK website!</font>
 
 This is a website I made, with a lot of help from AI (wanted to try what vibe-coding was about), that uses the Chess.com public API to count how many rook sacrifices a player has across their **public games** (games shown under your 'Game History' in your profile). Simply enter your Chess.com username & hit 'search for rook sacrifices'.
