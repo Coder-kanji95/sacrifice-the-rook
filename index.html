@@ -79,10 +79,10 @@
                         const moves = pgn.match(/\d+\..+?\s/g);
                         if(!moves) continue;
 
-                        moves.forEach(move => {
+                        moves.forEach((move, index) => {
                             // detect if rook is captured
                             if(move.includes('xR')) {
-                                const nextMoveIndex = moves.indexOf(move) + 1;
+                                const nextMoveIndex = index + 1;
                                 if(nextMoveIndex < moves.length) {
                                     const nextMove = moves[nextMoveIndex];
                                     if(!nextMove.match(/[NBRQ]/)) {
