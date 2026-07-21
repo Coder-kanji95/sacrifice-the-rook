@@ -10,106 +10,115 @@
         <link rel="stylesheet" type="text/css" href="styles.css">
     </head>
     <body>
+        <br><br>
 
-    <div class="overlay">
-        <audio id="rookSound" src="sacrifices-the-rook.mp3" preload="auto"></audio>
-
-        <button onclick="playRookSound()" class="sound-btn">
-            ♜
-        </button>
-
-        <h1>Sacrifice The ROOOOOOOOOK!</h1>
-        <p>How many times have you sacrificed your rook? Find out here!</p>
-
-        <p style="font-weight:bold; font-size:0.95em;">Games included:</p>
-        <ul>
-            <li>Standard Chess only: Rapid, Blitz, Bullet, Daily (Variants are excluded)</li>
-            <li>Public games only (Private games are not counted)</li>
-            <li>Bot games are excluded</li>
-        </ul>
-
-        <div class="input-container">
-            <input type="text" id="username" placeholder="Enter Chess.com username">
-            <button onclick="searchRookSac()">Search for rook sacrifices</button>
+        <div class="warning">
+            Just a heads-up: This website doesn't seem to work properly & contains bugs. A Python version may replace the website rook sac checker tool
         </div>
 
-        <div id="result"></div>
-    </div>
+        <div class="overlay">
+            <audio id="rookSound" src="sacrifices-the-rook.mp3" preload="auto"></audio>
 
-    <!--JAVASCRIPT-->
-    <script>
-        function playRookSound() {
-            const audio = document.getElementById('rookSound');
-            audio.currentTime = 0;
-            audio.play().catch(err => {
-                console.log("Audio play was prevented:", err);
-            });
-        }
+            <button onclick="playRookSound()" class="sound-btn">
+                ♜
+            </button>
 
-        async function searchRookSac() {
-            const username = document.getElementById('username').value.trim();
-            const resultDiv = document.getElementById('result');
+            <h1>Sacrifice The ROOOOOOOOOK!</h1>
+            <p>How many times have you sacrificed your rook? Find out here!</p>
 
-            if(!username) {
-                resultDiv.textContent = "Please enter a username!";
-                return;
+            <p style="font-weight:bold; font-size:0.95em;">Games included:</p>
+            <ul>
+                <li>Standard Chess only: Rapid, Blitz, Bullet, Daily (Variants are excluded)</li>
+                <li>Public games only (Private games are not counted)</li>
+                <li>Bot games are excluded</li>
+            </ul>
+
+            <div class="input-container">
+                <input type="text" id="username" placeholder="Enter Chess.com username">
+                <button <!--onclick="searchRookSac()"-->Search for rook sacrifices</button>
+            </div>
+
+            <br><br>
+            Search button disabled
+
+            <div id="result"></div>
+        </div>
+
+        <!--JAVASCRIPT-->
+        <script>
+            function playRookSound() {
+                const audio = document.getElementById('rookSound');
+                audio.currentTime = 0;
+                audio.play().catch(err => {
+                    console.log("Audio play was prevented:", err);
+                });
             }
 
-            resultDiv.textContent = "Searching all archives... This may take a few seconds.";
+            async function searchRookSac() {
+                const username = document.getElementById('username').value.trim();
+                const resultDiv = document.getElementById('result');
 
-            try {
-                const archivesResponse = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`);
-                if(!archivesResponse.ok) throw new Error('User not found');
-                const archivesData = await archivesResponse.json();
-
-                let rookSacCount = 0;
-
-                for(const archiveUrl of archivesData.archives) {
-                    const gamesResponse = await fetch(archiveUrl);
-                    const gamesData = await gamesResponse.json();
-
-                    for(const game of gamesData.games) {
-                        // Skip bot games
-                        if(game.white?.username?.toLowerCase().includes("bot") || game.black?.username?.toLowerCase().includes("bot")) continue;
-
-                        // Only standard chess
-                        if(game.rules !== "chess") continue;
-
-                        const pgn = game.pgn;
-                        const moves = pgn.match(/\d+\..+?\s/g);
-                        if(!moves) continue;
-
-                        moves.forEach((move, index) => {
-                            // detect if rook is captured
-                            if(move.includes('xR')) {
-                                const nextMoveIndex = index + 1;
-                                if(nextMoveIndex < moves.length) {
-                                    const nextMove = moves[nextMoveIndex];
-                                    if(!nextMove.match(/[NBRQ]/)) {
-                                        rookSacCount++;
-                                    }
-                                } else {
-                                    rookSacCount++;
-                                }
-                            }
-                        });
-                    }
+                if(!username) {
+                    resultDiv.textContent = "Please enter a username!";
+                    return;
                 }
 
-                resultDiv.textContent = `${username} has ${rookSacCount} rook sacrifices`;
-            } catch (err) {
-                console.error(err);
-                resultDiv.textContent = "Error fetching games. Make sure the username is correct!";
-            }
-        }
-    </script>
-    <!--JAVASCRIPT-->
+                resultDiv.textContent = "Searching all archives... This may take a few seconds.";
 
-    2026 Sacrifice The ROOOOOOOOOK! By kanji
-    <div class="disclaimer">
-        ‼️DISCLAIMER ‼️
-        This website has been vibe-coded using ChatGPT
-    </div>
+                try {
+                    const archivesResponse = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`);
+                    if(!archivesResponse.ok) throw new Error('User not found');
+                    const archivesData = await archivesResponse.json();
+
+                    let rookSacCount = 0;
+
+                    for(const archiveUrl of archivesData.archives) {
+                        const gamesResponse = await fetch(archiveUrl);
+                        const gamesData = await gamesResponse.json();
+
+                        for(const game of gamesData.games) {
+                            // Skip bot games
+                            if(game.white?.username?.toLowerCase().includes("bot") || game.black?.username?.toLowerCase().includes("bot")) continue;
+
+                            // Only standard chess
+                            if(game.rules !== "chess") continue;
+
+                            const pgn = game.pgn;
+                            const moves = pgn.match(/\d+\..+?\s/g);
+                            if(!moves) continue;
+
+                            moves.forEach((move, index) => {
+                                // detect if rook is captured
+                                if(move.includes('xR')) {
+                                    const nextMoveIndex = index + 1;
+                                    if(nextMoveIndex < moves.length) {
+                                        const nextMove = moves[nextMoveIndex];
+                                        if(!nextMove.match(/[NBRQ]/)) {
+                                            rookSacCount++;
+                                        }
+                                    } else {
+                                        rookSacCount++;
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    resultDiv.textContent = `${username} has ${rookSacCount} rook sacrifices`;
+                } catch (err) {
+                    console.error(err);
+                    resultDiv.textContent = "Error fetching games. Make sure the username is correct!";
+                }
+            }
+        </script>
+        <!--JAVASCRIPT-->
+        <br>
+
+        2026 Sacrifice The ROOOOOOOOOK! By kanji
+        <div class="disclaimer">
+            ‼️DISCLAIMER ‼️
+            This website has been vibe-coded using ChatGPT
+        </div>
 
     </body>
 </html>

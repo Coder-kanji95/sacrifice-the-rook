@@ -58,6 +58,21 @@
     text-align: center;
 }
 
+.warning {
+    color: rgba(219, 21, 21, 0.76);
+    width: fit-content;
+    height: 50px;
+    border-style: solid;
+    border-width: 4px;
+    border-color: #FF5733;
+    padding: 10px;
+    margin: 0 auto;
+    background-color: lightyellow;
+    font-size: 20px;
+    font-style: oblique;
+    text-align: center;
+}
+
 body {
     font-family: 'Comic Neue', sans-serif;
     margin: 0;
@@ -104,7 +119,7 @@ input {
 button {
     padding: 10px 15px;
     font-size: 1em;
-    background-color: #00bfff;
+    background-color: #7b8081;
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -113,5 +128,5 @@ button {
 }
 
 button:hover {
-    background-color: #00bfff;
+    background-color: #7b8081;  
 }
