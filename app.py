@@ -16,11 +16,24 @@ import sys
 #To play the sound file (THE ROOOOOOOOK) when the button is clicked
 import pygame
 
+#To parse PGNs & detect rook sacrifices (in other words - core functionality)
+import chess
+
 #----------------------------Sub-programs----------------------------------------
 def searchRookSacs(pInpFrame, pOutFrame, pUserEntry):
     #get the Chess.com username from the entry widget & pass it to validation
     username = pUserEntry.get().strip()
-    titleValidation(username)
+    valid = titleValidation(username)
+
+    #if username is of valid format, send API request
+    if valid == True:
+        #send API request (with user agent - as Chess.com requires this to identify requests)
+        headers = {
+            "User-Agent": "RookSacCheckerTool/1.0 (kavijasaluwadana@gmail.com)"
+        }
+
+        url = f"https://api.chess.com/pub/player/{username}/games/archives"
+        response = requests.get(url, headers = headers)
 
 def rookSound():
     pygame.mixer.init()
