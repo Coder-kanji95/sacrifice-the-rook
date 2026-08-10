@@ -13,8 +13,6 @@ https://github.com/Coder-kanji95/sacrifice-the-rook/discussions
 - You can share your thoughts & opinions under the 'General' category (and just chat :)) in the Discussions or email wrathnofnmathn@gmail.com 
 - Share ideas for features under the 'Ideas' category in the Discussion, ask questions under 'Q&A' & watch for posts from me under 'Announcements'!
 
-Alright then, head on over to the website: https://coder-kanji95.github.io/sacrifice-the-rook/ (also linked in the 'About' section at the top-right)
-
 🔥🔥🔥 [https://www.youtube.com/watch?v=08jEcWKzxWU](https://www.youtube.com/watch?v=08jEcWKzxWU) 🔥🔥🔥🔥
 
 P.S Feel free to inspect the source code :)
