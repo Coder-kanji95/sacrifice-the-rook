@@ -17,7 +17,8 @@ import sys
 import pygame
 
 #To parse PGNs & detect rook sacrifices (in other words - core functionality)
-import chess
+import io
+import chess.pgn
 
 #----------------------------Sub-programs----------------------------------------
 def searchRookSacs(pInpFrame, pOutFrame, pUserEntry):
@@ -33,7 +34,108 @@ def searchRookSacs(pInpFrame, pOutFrame, pUserEntry):
         }
 
         url = f"https://api.chess.com/pub/player/{username}/games/archives"
-        response = requests.get(url, headers = headers)
+
+        #credit: thanks https://www.endpoint51.com/python-api-error-handling/ for the very robust try/except error handling
+        try:
+            #try to send API request, if successful get the links to monthly archives of games, in the json. if not, appropiate error msg is displayed
+            #NOTE: Do try-except method for error handling in my NEA as well
+            response = requests.get(url, headers = headers, timeout = 5)
+            response.raise_for_status()
+        except requests.exceptions.Timeout:
+            messagebox.showerror("Error", "The request timed out. The server may be slow or unreachable.")
+        except requests.exceptions.ConnectionError:
+            messagebox.showerror("Error", "Could not reach the server. Check the network or the URL.")
+        except requests.exceptions.HTTPError as error:
+            messagebox.showerror("Error", f"The server returned an error status: {error.response.status_code}")
+        except requests.exceptions.JSONDecodeError:
+            messagebox.showerror("Error", "The server returned a response that was not valid JSON.")
+        except requests.exceptions.TooManyRedirects:
+            messagebox.showerror("Error", "The request followed too many redirects. Check the URL.")
+        except requests.exceptions.RequestException as error:
+            messagebox.showerror("Error", f"An unexpected request error occurred: {error}")
+        else:
+            results = response.json()
+
+            #check if there are actually links to monthly archives
+            #new users (just created Chess.com acc) will not
+            if len(results["archives"]) == 0:
+                messagebox.showwarning("Error", f"{username}, you have no public games in the archive")
+                gamesExist = False
+            else:
+                gamesExist = True
+
+            if gamesExist == True:
+                archives = results["archives"]
+                allMonths = []
+
+                #get each month's games & add it to a list
+                for index in range(0, len(archives)):
+                    try:
+                        response = requests.get(archives[index], headers = headers, timeout = 5)
+                        response.raise_for_status()
+                    except requests.exceptions.Timeout:
+                        messagebox.showerror("Error", "The request timed out. The server may be slow or unreachable.")
+                    except requests.exceptions.ConnectionError:
+                        messagebox.showerror("Error", "Could not reach the server. Check the network or the URL.")
+                    except requests.exceptions.HTTPError as error:
+                        messagebox.showerror("Error", f"The server returned an error status: {error.response.status_code}")
+                    except requests.exceptions.JSONDecodeError:
+                        messagebox.showerror("Error", "The server returned a response that was not valid JSON.")
+                    except requests.exceptions.TooManyRedirects:
+                        messagebox.showerror("Error", "The request followed too many redirects. Check the URL.")
+                    except requests.exceptions.RequestException as error:
+                        messagebox.showerror("Error", f"An unexpected request error occurred: {error}")
+                    else:
+                        monthlyResults = response.json()
+                        allMonths.append(monthlyResults)
+
+                #exclude variant games
+                #the list 'allMonths' contains dictionaries of games in a single month (i think)
+                #so in each iteration of the for loop, 'month' is a dict of games in a month
+                #each game's data is stored in a dict & all the games of a month is in a list (this is what 'monthGames' is), accessible thru the "games" key of 'month' dict
+                toReview = []
+                for month in allMonths:
+                    monthGames = month["games"]
+
+                    #we iterate thru the list (acquired by the "games" key) to check the value of the "rules" key to each dict (chess game) to make sure each game checked for rook sacs is standard chess (the part where variants are filtered)
+                    for game in monthGames:
+                        if game["rules"] == "chess":
+                            toReview.append(game)
+
+                #pass this list (toReview) into the 'brains'/chess logic subroutine that will check each game for rook sacs
+                #list 'toReview' - contains all public games of standard chess
+                theBrains(pInpFrame, pOutFrame, toReview, username)
+
+def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
+    for game in gameArchive:
+        pgn = game["pgn"] #grab pgn of the chess game
+
+        #allow python-chess to parse the pgn. python-chess expects a file but the pgn rn is a string so StringIO temporarily turns the string into an in-memory file
+        game = chess.pgn.read_game(io.StringIO(pgn)) 
+        board = game.board() #create a board
+
+        #get the colour of pieces the user was playing with
+        #internally (in python-chess) chess.WHITE & chess.BLACK are boolean (capturedPiece.color also returns a bool)
+        if game["white"]["username"].lower() == pUsername.lower():
+            playerColour = chess.WHITE
+        else:
+            playerColour = chess.BLACK
+    
+        #the pgn stores a sequence of moves & a for loop is used to replay them
+        for move in game.mainline_moves():
+            #check whether the move is a capture of a piece or just a normal move of a piece moving to empty square. returns True/False
+            if board.is_capture(move) == True:
+                capturedPiece = board.piece_at(move.to_square)
+
+                #check if the captured piece is a rook
+                #internally, python-chess has constants for each piece, like chess.PAWN = 1, chess.ROOK = 4 & .piece_type also returns a num const so if condition checks if the num corresponding to the capturedPiece is the same as the num corresponding to a ROOK
+                #Also, the num constants are NOT the values of the pieces!
+
+                #check if the colour of the rook captured is the colour of pieces the user is playing with
+                #if both are true, that means the user's rook was captured....
+                if (capturedPiece.piece_type == chess.ROOK) and (capturedPiece.color == playerColour):
+                    #.....meaning.....POSSIBLE ROOK SACRIFICE
+                    board.push(move) #play the move where the user's rook is captured
 
 def rookSound():
     pygame.mixer.init()
