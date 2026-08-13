@@ -24,11 +24,11 @@ import chess.pgn
 import threading
 
 #----------------------------Sub-programs----------------------------------------
-def workerThread(pInpFrame, pOutFrame, pUserEntry):
-    thread1 = threading.Thread(target=searchRookSacs, args=(pInpFrame, pOutFrame, pUserEntry))
+def workerThread(pInpFrame, pOutFrame, pUserEntry, app):
+    thread1 = threading.Thread(target=searchRookSacs, args=(pInpFrame, pOutFrame, pUserEntry, app))
     thread1.start()
 
-def searchRookSacs(pInpFrame, pOutFrame, pUserEntry):
+def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app):
     #get the Chess.com username from the entry widget & pass it to validation
     username = pUserEntry.get().strip()
     valid = titleValidation(username)
@@ -111,79 +111,92 @@ def searchRookSacs(pInpFrame, pOutFrame, pUserEntry):
 
                 #pass this list (toReview) into the 'brains'/chess logic subroutine that will check each game for rook sacs
                 #list 'toReview' - contains all public games of standard chess
-                #theBrains(pInpFrame, pOutFrame, toReview, username)
+                rookSacs = theBrains(pInpFrame, pOutFrame, toReview, username)
 
-# def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
-#     rookSacGames = []
+                app.after(0, displayRookSacs(rookSacs, pInpFrame, pOutFrame))
 
-#     for game in gameArchive:
-#         pgn = game["pgn"] #grab pgn of the chess game
+def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
+    rookSacGames = []
 
-#         #allow python-chess to parse the pgn. python-chess expects a file but the pgn rn is a string so StringIO temporarily turns the string into an in-memory file
-#         game = chess.pgn.read_game(io.StringIO(pgn)) 
-#         board = game.board() #create a board
+    for game in gameArchive:
+        pgn = game["pgn"] #grab pgn of the chess game
 
-#         #get the colour of pieces the user was playing with
-#         #internally (in python-chess) chess.WHITE & chess.BLACK are boolean (capturedPiece.color also returns a bool)
-#         if game["white"]["username"].lower() == pUsername.lower():
-#             playerColour = chess.WHITE
-#         else:
-#             playerColour = chess.BLACK
+        #get the colour of pieces the user was playing with
+        #internally (in python-chess) chess.WHITE & chess.BLACK are boolean (capturedPiece.color also returns a bool)
+        if game["white"]["username"].lower() == pUsername.lower():
+            playerColour = chess.WHITE
+        else:
+            playerColour = chess.BLACK
 
-#         #chess piece values
-#         pieceValues = {
-#             chess.PAWN: 1,
-#             chess.KNIGHT: 3,
-#             chess.BISHOP: 3,
-#             chess.ROOK: 5,
-#             chess.QUEEN: 9
-#         }
+        chessGame = game
+        #allow python-chess to parse the pgn. python-chess expects a file but the pgn rn is a string so StringIO temporarily turns the string into an in-memory file
+        game = chess.pgn.read_game(io.StringIO(pgn)) 
+        board = game.board() #create a board
 
-#         moves = list(game.mainline_moves())
-#         #the pgn stores a sequence of moves & a for loop is used to replay them
-#         for move, index in enumerate(moves):
-#             #check whether the move is a capture of a piece or just a normal move of a piece moving to empty square. returns True/False
-#             if board.is_capture(move) == True:
-#                 capturedPiece = board.piece_at(move.to_square)
+        #chess piece values
+        pieceValues = {
+            chess.PAWN: 1,
+            chess.KNIGHT: 3,
+            chess.BISHOP: 3,
+            chess.ROOK: 5,
+            chess.QUEEN: 9
+        }
 
-#                 #check if the captured piece is a rook
-#                 #internally, python-chess has constants for each piece, like chess.PAWN = 1, chess.ROOK = 4 & .piece_type also returns a num const so if condition checks if the num corresponding to the capturedPiece is the same as the num corresponding to a ROOK
-#                 #Also, the num constants are NOT the values of the pieces!
+        moves = list(game.mainline_moves())
+        #the pgn stores a sequence of moves & a for loop is used to replay them
+        for index, move in enumerate(moves):
 
-#                 #check if the colour of the rook captured is the colour of pieces the user is playing with
-#                 #if both are true, that means the user's rook was captured....
-#                 if (capturedPiece.piece_type == chess.ROOK) and (capturedPiece.color == playerColour):
-#                     #.....meaning.....POSSIBLE ROOK SACRIFICE - start the heuristic
-#                     #the board is currently before the rook capture. make a copy of the board & push the rook capture
-#                     #the reason a copy is made is cuz to look ahead for material compensation without messing up the main loop
-#                     heuristicBoard = board.copy()
-#                     heuristicBoard.push(move)
+            #check whether the move is a capture of a piece or just a normal move of a piece moving to empty square. returns True/False
+            if board.is_capture(move) == True:
+                capturedPiece = board.piece_at(move.to_square)
 
-#                     lookAhead = 6 #NOTE: EXPERIMENT WITH THIS - Look ahead n moves => each player gets n/2 turns
-#                     materialGained = 0
+                #sometimes, a move can be capture yet nothing on the move's destination square (EN PASSANT!!)
+                if capturedPiece is not None:
+                    #check if the captured piece is a rook
 
-#                     #index+1 : as index corresponds to the current move - where the user's rook gets captured
-#                     #index+7 : as we want to check the next 6 moves (next 6 indexes) - end index not included
-#                     for futureMove in moves[index+1:index+7]:
-#                         #if the move is a capture & the user made this capture.....
-#                         if (heuristicBoard.is_capture(futureMove) == True) and (heuristicBoard.turn == playerColour):
-#                             futureCapturedPiece = heuristicBoard.piece_at(futureMove.to_square)
+                    #internally, python-chess has constants for each piece, like chess.PAWN = 1, chess.ROOK = 4 & .piece_type also returns a num const so if condition checks if the num corresponding to the capturedPiece is the same as the num corresponding to a ROOK
+                    #Also, the num constants are NOT the values of the pieces!
 
-#                             #......record how much material the user gains from the capture of this piece
-#                             materialGained = materialGained + pieceValues[futureCapturedPiece.piece_type]
+                    #check if the colour of the rook captured is the colour of pieces the user is playing with
+                    #if both are true, that means the user's rook was captured....
+                    if (capturedPiece.piece_type == chess.ROOK) and (capturedPiece.color == playerColour):
+                        #.....meaning.....POSSIBLE ROOK SACRIFICE - start the heuristic
+                        #the board is currently before the rook capture. make a copy of the board & push the rook capture
+                        #the reason a copy is made is cuz to look ahead for material compensation without messing up the main loop
+                        heuristicBoard = board.copy()
+                        heuristicBoard.push(move)
 
-#                         heuristicBoard.push(futureMove)
+                        lookAhead = 6 #NOTE: EXPERIMENT WITH THIS - Look ahead n moves => each player gets n/2 turns
+                        materialGained = 0
 
-#                     #after going thru 6 moves (our user gets 3 turns), check if the total material they gained in this period is less than 5 points (the value of a rook). If so, that may mean it's a sacrifice
-#                     if materialGained < 5:
-#                         rookSacGame = []
-#                         rookSacGame.append(game)
-#                         rookSacGame.append(pgn)
-#                         rookSacGame.append(index)
+                        #index+1 : as index corresponds to the current move - where the user's rook gets captured
+                        #index+7 : as we want to check the next 6 moves (next 6 indexes) - end index not included
+                        for futureMove in moves[index+1:index+7]:
+                            #if the move is a capture & the user made this capture.....
+                            if (heuristicBoard.is_capture(futureMove) == True) and (heuristicBoard.turn == playerColour):
+                                futureCapturedPiece = heuristicBoard.piece_at(futureMove.to_square)
 
-#                         rookSacGames.append(rookSacGame)
+                                #......record how much material the user gains from the capture of this piece
+                                materialGained = materialGained + pieceValues[futureCapturedPiece.piece_type]
 
-#             board.push(move) #play the move where the user's rook is captured
+                            heuristicBoard.push(futureMove)
+
+                        #after going thru 6 moves (our user gets 3 turns), check if the total material they gained in this period is less than 5 points (the value of a rook). If so, that may mean it's a sacrifice
+                        if materialGained < 5:
+                            rookSacGame = []
+                            rookSacGame.append(chessGame)
+                            rookSacGame.append(index)
+                            rookSacGame.append(materialGained)
+
+                            rookSacGames.append(rookSacGame)
+
+            board.push(move) #play the move where the user's rook is captured
+
+    #return a (possibly massive) list of all rook sacs
+    return rookSacGames
+
+def displayRookSacs(pRookSacs, pInpFrame, pOutFrame):
+    return
 
 def rookSound():
     pygame.mixer.init()
@@ -250,7 +263,7 @@ descLbl.grid(row = 4, column = 0, padx = 5, pady = 10, columnspan = 2)
 userEntry = ctk.CTkEntry(inpFrame, placeholder_text = "Enter your Chess.com username...", font = ("Comic Sans Ms", 14), width = 250)
 userEntry.grid(row = 5, column = 0, padx = 5, pady = 10, sticky = "w")
 
-searchBtn = ctk.CTkButton(inpFrame, text = "Search for rook sacrifices", font = ("Comic Sans Ms", 16), command = lambda: workerThread(inpFrame, outFrame, userEntry))
+searchBtn = ctk.CTkButton(inpFrame, text = "Search for rook sacrifices", font = ("Comic Sans Ms", 16), command = lambda: workerThread(inpFrame, outFrame, userEntry, app))
 searchBtn.grid(row = 5, column = 1, padx = 5, pady = 10, sticky = "w")
 
 app.mainloop()
