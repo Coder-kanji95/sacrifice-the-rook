@@ -107,6 +107,8 @@ def searchRookSacs(pInpFrame, pOutFrame, pUserEntry):
                 theBrains(pInpFrame, pOutFrame, toReview, username)
 
 def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
+    rookSacGames = []
+
     for game in gameArchive:
         pgn = game["pgn"] #grab pgn of the chess game
 
@@ -120,9 +122,19 @@ def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
             playerColour = chess.WHITE
         else:
             playerColour = chess.BLACK
-    
+
+        #chess piece values
+        pieceValues = {
+            chess.PAWN: 1,
+            chess.KNIGHT: 3,
+            chess.BISHOP: 3,
+            chess.ROOK: 5,
+            chess.QUEEN: 9
+        }
+
+        moves = list(game.mainline_moves())
         #the pgn stores a sequence of moves & a for loop is used to replay them
-        for move in game.mainline_moves():
+        for move, index in enumerate(moves):
             #check whether the move is a capture of a piece or just a normal move of a piece moving to empty square. returns True/False
             if board.is_capture(move) == True:
                 capturedPiece = board.piece_at(move.to_square)
@@ -134,8 +146,37 @@ def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
                 #check if the colour of the rook captured is the colour of pieces the user is playing with
                 #if both are true, that means the user's rook was captured....
                 if (capturedPiece.piece_type == chess.ROOK) and (capturedPiece.color == playerColour):
-                    #.....meaning.....POSSIBLE ROOK SACRIFICE
-                    board.push(move) #play the move where the user's rook is captured
+                    #.....meaning.....POSSIBLE ROOK SACRIFICE - start the heuristic
+                    #the board is currently before the rook capture. make a copy of the board & push the rook capture
+                    #the reason a copy is made is cuz to look ahead for material compensation without messing up the main loop
+                    heuristicBoard = board.copy()
+                    heuristicBoard.push(move)
+
+                    lookAhead = 6 #NOTE: EXPERIMENT WITH THIS - Look ahead n moves => each player gets n/2 turns
+                    materialGained = 0
+
+                    #index+1 : as index corresponds to the current move - where the user's rook gets captured
+                    #index+7 : as we want to check the next 6 moves (next 6 indexes) - end index not included
+                    for futureMove in moves[index+1:index+7]:
+                        #if the move is a capture & the user made this capture.....
+                        if (heuristicBoard.is_capture(futureMove) == True) and (heuristicBoard.turn == playerColour):
+                            futureCapturedPiece = heuristicBoard.piece_at(futureMove.to_square)
+
+                            #......record how much material the user gains from the capture of this piece
+                            materialGained = materialGained + pieceValues[futureCapturedPiece.piece_type]
+
+                        heuristicBoard.push(futureMove)
+
+                    #after going thru 6 moves (our user gets 3 turns), check if the total material they gained in this period is less than 5 points (the value of a rook). If so, that may mean it's a sacrifice
+                    if materialGained < 5:
+                        rookSacGame = []
+                        rookSacGame.append(game)
+                        rookSacGame.append(pgn)
+                        rookSacGame.append(index)
+
+                        rookSacGames.append(rookSacGame)
+
+            board.push(move) #play the move where the user's rook is captured
 
 def rookSound():
     pygame.mixer.init()
