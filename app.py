@@ -5,6 +5,12 @@ from tkinter import messagebox
 #Input validation
 from validation.inputValidation import titleValidation
 
+#Displaying rook sac games on a chessboard using matplotlib
+from matplolib_chessboard import startDisplay
+
+#For displaying images
+from PIL import Image
+
 #For making API requests & manipulating them
 import requests
 import json
@@ -24,6 +30,11 @@ import chess.pgn
 import threading
 
 #----------------------------Sub-programs----------------------------------------
+def getFilePaths(imgPath):
+    basePath = os.path.abspath(".") #gives the folder where the main file is - which is main folder btw
+    
+    return os.path.join(basePath, imgPath)
+
 def workerThread(pInpFrame, pOutFrame, pUserEntry, app):
     thread1 = threading.Thread(target=searchRookSacs, args=(pInpFrame, pOutFrame, pUserEntry, app))
     thread1.start()
@@ -35,6 +46,8 @@ def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app):
 
     #if username is of valid format, send API request
     if valid == True:
+        messagebox.showinfo("Processing...", "Fetching links to monthly games...")
+
         #send API request (with user agent - as Chess.com requires this to identify requests)
         headers = {
             "User-Agent": "RookSacCheckerTool/1.0 (kavijasaluwadana@gmail.com)"
@@ -72,6 +85,8 @@ def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app):
                 gamesExist = True
 
             if gamesExist == True:
+                messagebox.showinfo("Processing...", "Fetching monthly games... This may take a while!")
+
                 archives = results["archives"]
                 allMonths = []
 
@@ -96,6 +111,7 @@ def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app):
                         monthlyResults = response.json()
                         allMonths.append(monthlyResults)
 
+                messagebox.showinfo("Games Fetched!", "Excluding variant games...")
                 #exclude variant games
                 #the list 'allMonths' contains dictionaries of games in a single month (i think)
                 #so in each iteration of the for loop, 'month' is a dict of games in a month
@@ -113,9 +129,10 @@ def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app):
                 #list 'toReview' - contains all public games of standard chess
                 rookSacs = theBrains(pInpFrame, pOutFrame, toReview, username)
 
-                app.after(0, displayRookSacs(rookSacs, pInpFrame, pOutFrame))
+                app.after(0, lambda: displayRookSacs(rookSacs, pInpFrame, username))
 
 def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
+    messagebox.showinfo("Processing...", "Looking through each game for rook sacrifices... This may take a while!")
     rookSacGames = []
 
     for game in gameArchive:
@@ -176,8 +193,9 @@ def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
                             if (heuristicBoard.is_capture(futureMove) == True) and (heuristicBoard.turn == playerColour):
                                 futureCapturedPiece = heuristicBoard.piece_at(futureMove.to_square)
 
-                                #......record how much material the user gains from the capture of this piece
-                                materialGained = materialGained + pieceValues[futureCapturedPiece.piece_type]
+                                if futureCapturedPiece is not None:
+                                    #......record how much material the user gains from the capture of this piece
+                                    materialGained = materialGained + pieceValues[futureCapturedPiece.piece_type]
 
                             heuristicBoard.push(futureMove)
 
@@ -193,10 +211,15 @@ def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
             board.push(move) #play the move where the user's rook is captured
 
     #return a (possibly massive) list of all rook sacs
+    messagebox.showinfo("Processing done!", "All public games checked for rook sacs!")
     return rookSacGames
 
-def displayRookSacs(pRookSacs, pInpFrame, pOutFrame):
-    return
+def displayRookSacs(pRookSacs, pInpFrame, pUsername):
+    #display a label below the input box showing how rook sacs the user has
+    rookSacCountLbl = ctk.CTkLabel(pInpFrame, text = f"{pUsername}, you have {len(pRookSacs)} rook sacrifices!", font = ("Comic Sans Ms", 14))
+    rookSacCountLbl.grid(row = 6, column = 0, padx = 5, pady = 10)
+
+    startDisplay(pRookSacs)
 
 def rookSound():
     pygame.mixer.init()
@@ -217,10 +240,10 @@ frame = ctk.CTkFrame(app)
 frame.pack(expand = True)
 
 #create two sub-frames
-inpFrame = ctk.CTkFrame(frame)
+inpFrame = ctk.CTkFrame(frame, width = 400, height = 400)
 inpFrame.grid(row = 0, column = 0, padx = 5, pady = 10)
 
-outFrame = ctk.CTkFrame(frame)
+outFrame = ctk.CTkFrame(frame, width = 400, height = 400)
 outFrame.grid(row = 0, column = 1, padx = 5, pady = 10)
 
 #display the rook sound button
@@ -265,5 +288,20 @@ userEntry.grid(row = 5, column = 0, padx = 5, pady = 10, sticky = "w")
 
 searchBtn = ctk.CTkButton(inpFrame, text = "Search for rook sacrifices", font = ("Comic Sans Ms", 16), command = lambda: workerThread(inpFrame, outFrame, userEntry, app))
 searchBtn.grid(row = 5, column = 1, padx = 5, pady = 10, sticky = "w")
+
+#display something as a placeholder in the output frame (where the specific games where rook sacs have happened will show)
+imgPath = getFilePaths(os.path.join("absolutecinema.png"))
+
+placeholderImg = ctk.CTkImage(
+    light_image = Image.open(imgPath),
+    dark_image = Image.open(imgPath),
+    size = (330, 330)
+)
+
+imgLbl = ctk.CTkLabel(outFrame, text = "", image = placeholderImg)
+imgLbl.grid(row = 0, column = 0, padx = 5, pady = 10)
+
+txtLbl = ctk.CTkLabel(outFrame, text = "Games with rook sacs are displayed in a Matplotlib window",  font = ("Comic Sans Ms", 14))
+txtLbl.grid(row = 1, column = 0, padx = 5, pady = 10)
 
 app.mainloop()
