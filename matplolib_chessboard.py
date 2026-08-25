@@ -6,6 +6,7 @@ import chess
 import io
 
 from matplotlib.widgets import Button
+from matplotlib import font_manager
 
 #----------------------------Sub-programs----------------------------------------
 def createBoard(lightColour = "#F0D9B5", darkColour = "#B58863"):
@@ -22,10 +23,19 @@ def addLabels(ax):
         ax.text(i + 0.5, -0.3, chr(65 + i), ha = "center", va = "center", fontname = "Courier New", fontsize = 16, fontweight = "bold")
         ax.text(-0.3, i + 0.5, str(8 - i), ha = "center", va = "center", fontname = "Courier New", fontsize = 16, fontweight = "bold")
 
-def goThruGame(game, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts):
+def goThruGame(game, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt):
     gameInfo = game[0]
     #index = rookSac[1]
     #materialGained = rookSac[2]
+
+    whitePlayer = gameInfo["white"]["username"]
+    whiteELO = gameInfo["white"]["rating"]
+
+    blackPlayer = gameInfo["black"]["username"]
+    blackELO = gameInfo["black"]["rating"]
+
+    whitePlayerTxt.set_text(f"{whitePlayer} ({whiteELO})")
+    blackPlayerTxt.set_text(f"{blackPlayer} ({blackELO})")
 
     pgn = gameInfo["pgn"]
     chessGame = chess.pgn.read_game(io.StringIO(pgn)) 
@@ -82,20 +92,23 @@ def nextTurn(fig, ax, pieceTexts, board, columnMap, pieces, moves, currentMove):
 
         updateBoard(fig, ax, pieceTexts, board, columnMap, pieces)
 
-def previousGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts):
+def previousGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt):
     if currentGame[0] > 0:
         currentGame[0] = currentGame[0] - 1
 
-        goThruGame(rookSacGames[currentGame[0]], fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts)
+        goThruGame(rookSacGames[currentGame[0]], fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt)
 
-def nextGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts):
+def nextGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt):
     if currentGame[0] < len(rookSacGames)-1: #go to the next game if not already at the last game
         currentGame[0] = currentGame[0] + 1
 
-        goThruGame(rookSacGames[currentGame[0]], fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts)
+        goThruGame(rookSacGames[currentGame[0]], fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt)
 
 #This is called by app.py (main program file) to display rook sacs. Inside of startDisplay(), it runs the other subroutines as needed
-def startDisplay(rookSacs):
+def startDisplay(rookSacs, jetBrainsNF):
+    font_manager.fontManager.addfont(jetBrainsNF)
+    font = font_manager.FontProperties(fname=jetBrainsNF)
+
     #bringing the rook sac info of each game together
     #structure of rookSacGames list - #[index, materialGained] is the info needed for one rook sac
     #[
@@ -161,15 +174,19 @@ def startDisplay(rookSacs):
     previousGameBtn = Button(prevGame, "Previous Game")
     nextGameBtn = Button(nxtGame, "Next Game")
 
-    pieceTexts = []
+    pieceTexts = [] #store text objects of the chess pieces
+
+    whitePlayerTxt = ax.text(-1, 0, "", ha = "right", va = "top", font = font, fontsize = 16, fontweight = "bold")
+    blackPlayerTxt = ax.text(-1, 8, "", ha = "right", va = "bottom", font = font, fontsize = 16, fontweight = "bold")
+
     #start with the first game
     game = rookSacGames[0]
-    goThruGame(game, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts)
+    goThruGame(game, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt)
 
     currentGame = [0]
-    nextGameBtn.on_clicked(lambda event: nextGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts))
+    nextGameBtn.on_clicked(lambda event: nextGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt))
 
-    previousGameBtn.on_clicked(lambda event: previousGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts))
+    previousGameBtn.on_clicked(lambda event: previousGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt))
     
     ax.axis("off")
     plt.show()

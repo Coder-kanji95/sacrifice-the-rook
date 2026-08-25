@@ -30,16 +30,16 @@ import chess.pgn
 import threading
 
 #----------------------------Sub-programs----------------------------------------
-def getFilePaths(imgPath):
+def getFilePaths(imgPath, jetBrainsFontTTF, icon):
     basePath = os.path.abspath(".") #gives the folder where the main file is - which is main folder btw
     
-    return os.path.join(basePath, imgPath)
+    return os.path.join(basePath, imgPath), os.path.join(basePath, "JetBrainsMonoNF", jetBrainsFontTTF), os.path.join(basePath, icon)
 
-def workerThread(pInpFrame, pOutFrame, pUserEntry, app):
-    thread1 = threading.Thread(target=searchRookSacs, args=(pInpFrame, pOutFrame, pUserEntry, app))
+def workerThread(pInpFrame, pOutFrame, pUserEntry, app, pJetBrainsNF):
+    thread1 = threading.Thread(target=searchRookSacs, args=(pInpFrame, pOutFrame, pUserEntry, app, pJetBrainsNF))
     thread1.start()
 
-def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app):
+def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app, pJetBrainsNF):
     #get the Chess.com username from the entry widget & pass it to validation
     username = pUserEntry.get().strip()
     valid = titleValidation(username)
@@ -129,7 +129,7 @@ def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app):
                 #list 'toReview' - contains all public games of standard chess
                 rookSacs = theBrains(pInpFrame, pOutFrame, toReview, username)
 
-                app.after(0, lambda: displayRookSacs(rookSacs, pInpFrame, username))
+                app.after(0, lambda: displayRookSacs(rookSacs, pInpFrame, username, pJetBrainsNF))
 
 def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
     messagebox.showinfo("Processing...", "Looking through each game for rook sacrifices... This may take a while!")
@@ -214,12 +214,12 @@ def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
     messagebox.showinfo("Processing done!", "All public games checked for rook sacs!")
     return rookSacGames
 
-def displayRookSacs(pRookSacs, pInpFrame, pUsername):
+def displayRookSacs(pRookSacs, pInpFrame, pUsername, pJetBrainsNF):
     #display a label below the input box showing how rook sacs the user has
     rookSacCountLbl = ctk.CTkLabel(pInpFrame, text = f"{pUsername}, you have {len(pRookSacs)} rook sacrifices!", font = ("Comic Sans Ms", 14))
     rookSacCountLbl.grid(row = 6, column = 0, padx = 5, pady = 10)
 
-    startDisplay(pRookSacs)
+    startDisplay(pRookSacs, pJetBrainsNF)
 
 def rookSound():
     pygame.mixer.init()
@@ -227,6 +227,8 @@ def rookSound():
     pygame.mixer.music.play()
 
 #----------------------------Main Program----------------------------------------
+imgPath, jetBrainsNF, iconPath = getFilePaths(os.path.join("absolutecinema.png"), os.path.join("JetBrainsMonoNerdFont-Regular.ttf"), os.path.join("icon.ico"))
+
 ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
@@ -234,6 +236,7 @@ ctk.set_default_color_theme("blue")
 app = ctk.CTk()
 app.title("ROOOOOK Sac Counter")
 app.geometry("1920x1080")
+app.iconbitmap(iconPath)
 
 #create a frame to hold two sub-frames (that will hold all the content - all the widgets: text, buttons, etc.)
 frame = ctk.CTkFrame(app)
@@ -286,12 +289,10 @@ descLbl.grid(row = 4, column = 0, padx = 5, pady = 10, columnspan = 2)
 userEntry = ctk.CTkEntry(inpFrame, placeholder_text = "Enter your Chess.com username...", font = ("Comic Sans Ms", 14), width = 250)
 userEntry.grid(row = 5, column = 0, padx = 5, pady = 10, sticky = "w")
 
-searchBtn = ctk.CTkButton(inpFrame, text = "Search for rook sacrifices", font = ("Comic Sans Ms", 16), command = lambda: workerThread(inpFrame, outFrame, userEntry, app))
+searchBtn = ctk.CTkButton(inpFrame, text = "Search for rook sacrifices", font = ("Comic Sans Ms", 16), command = lambda: workerThread(inpFrame, outFrame, userEntry, app, jetBrainsNF))
 searchBtn.grid(row = 5, column = 1, padx = 5, pady = 10, sticky = "w")
 
-#display something as a placeholder in the output frame (where the specific games where rook sacs have happened will show)
-imgPath = getFilePaths(os.path.join("absolutecinema.png"))
-
+#display a noice img :)
 placeholderImg = ctk.CTkImage(
     light_image = Image.open(imgPath),
     dark_image = Image.open(imgPath),
