@@ -23,10 +23,9 @@ def addLabels(ax):
         ax.text(i + 0.5, -0.3, chr(65 + i), ha = "center", va = "center", fontname = "Courier New", fontsize = 16, fontweight = "bold")
         ax.text(-0.3, i + 0.5, str(8 - i), ha = "center", va = "center", fontname = "Courier New", fontsize = 16, fontweight = "bold")
 
-def goThruGame(game, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt):
+def goThruGame(game, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt, moveTxt):
     gameInfo = game[0]
-    #index = rookSac[1]
-    #materialGained = rookSac[2]
+    rookSacInfo = game[1]
 
     whitePlayer = gameInfo["white"]["username"]
     whiteELO = gameInfo["white"]["rating"]
@@ -48,8 +47,8 @@ def goThruGame(game, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceText
     #update board
     updateBoard(fig, ax, pieceTexts, board, columnMap, pieces)
 
-    previousBtn.on_clicked(lambda event: previousTurn(fig, ax, pieceTexts, board, columnMap, pieces, currentMove))
-    nextBtn.on_clicked(lambda event: nextTurn(fig, ax, pieceTexts, board, columnMap, pieces, moves, currentMove))
+    previousBtn.on_clicked(lambda event: previousTurn(fig, ax, pieceTexts, board, columnMap, pieces, moves, currentMove, rookSacInfo, moveTxt))
+    nextBtn.on_clicked(lambda event: nextTurn(fig, ax, pieceTexts, board, columnMap, pieces, moves, currentMove, rookSacInfo, moveTxt))
 
 def updateBoard(fig, ax, pieceTexts, board, columnMap, pieces):
     #remove old piece Text objects (avoid overlap drawing)
@@ -76,33 +75,67 @@ def updateBoard(fig, ax, pieceTexts, board, columnMap, pieces):
 
     fig.canvas.draw_idle()
 
-def previousTurn(fig, ax, pieceTexts, board, columnMap, pieces, currentMove):
-    if currentMove[0] > 0:
-        board.pop()
-        currentMove[0] = currentMove[0] - 1
+def previousTurn(fig, ax, pieceTexts, board, columnMap, pieces, moves, currentMove, rookSacInfo, moveTxt):
+    if currentMove[0] > 0: #check whether there is a previous move to go back to
+        board.pop() #if there is, undo the move that was just pushed
+        currentMove[0] = currentMove[0] - 1 
+
+        #displaying the move in chess notation
+        #ex: e4 e5 & now u hit previous move. now what should happen is the first board.pop() (line 80) undoes e5. now, move that should be shown is e4 (the last one standing upto now), we temporarily undo e4 by a second .pop() & assign it (e4) to a variable so board.san() can get its notation
+        #the reason for the second if condition is that if, after the first .pop(), we had no more moves to go back (such as on the first move of the game), then doing board.san() on the move would give an error
+        #if it is the case such as the first move, then empty string is in the .set_text() so nothing displayed for the move
+
+        if currentMove[0] > 0: #so, this second if determines if there is still a previous move whose notation can be displayed
+            move = board.pop()
+
+            #get the move in standard chess notation (SAN) ex: Nf3 (knight to f3)
+            moveNotation = board.san(move)
+            moveTxt.set_text(f"Move: {moveNotation}") #show on the matplotlib window
+
+            board.push(move)
+        else:
+            moveTxt.set_text("")
 
         updateBoard(fig, ax, pieceTexts, board, columnMap, pieces)
 
-def nextTurn(fig, ax, pieceTexts, board, columnMap, pieces, moves, currentMove):
-    if currentMove[0] < len(moves):
+def nextTurn(fig, ax, pieceTexts, board, columnMap, pieces, moves, currentMove, rookSacInfo, moveTxt):
+    if currentMove[0] < len(moves): #checking whether there moves to go forwards to
         move = moves[currentMove[0]]
+
+        #get the move in standard chess notation (SAN) ex: Nf3 (knight to f3)
+        moveNotation = board.san(move)
+
+        isRookSac = False
+        materialGained = 0
+        for rookSac in rookSacInfo:
+            index = rookSac[0]
+            materialGained = rookSac[1]
+
+            if index == moves.index(move):
+                isRookSac = True
+                break
+
+        if isRookSac == True:
+            moveTxt.set_text(f"Move: {moveNotation} \n A stunning sacrifice! You sacrificed your ROOOOOOOOOK! Is it the PATH to VICTORY or the ULTIMATE BLUNDER? \n Material gained: {materialGained}") #show on the matplotlib window 
+        else:
+            moveTxt.set_text(f"Move: {moveNotation}")
 
         board.push(move)
         currentMove[0] = currentMove[0] + 1
 
         updateBoard(fig, ax, pieceTexts, board, columnMap, pieces)
 
-def previousGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt):
+def previousGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt, moveTxt):
     if currentGame[0] > 0:
         currentGame[0] = currentGame[0] - 1
 
-        goThruGame(rookSacGames[currentGame[0]], fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt)
+        goThruGame(rookSacGames[currentGame[0]], fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt, moveTxt)
 
-def nextGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt):
+def nextGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt, moveTxt):
     if currentGame[0] < len(rookSacGames)-1: #go to the next game if not already at the last game
         currentGame[0] = currentGame[0] + 1
 
-        goThruGame(rookSacGames[currentGame[0]], fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt)
+        goThruGame(rookSacGames[currentGame[0]], fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt, moveTxt)
 
 #This is called by app.py (main program file) to display rook sacs. Inside of startDisplay(), it runs the other subroutines as needed
 def startDisplay(rookSacs, jetBrainsNF):
@@ -176,17 +209,20 @@ def startDisplay(rookSacs, jetBrainsNF):
 
     pieceTexts = [] #store text objects of the chess pieces
 
-    whitePlayerTxt = ax.text(-1, 0, "", ha = "right", va = "top", font = font, fontsize = 16, fontweight = "bold")
-    blackPlayerTxt = ax.text(-1, 8, "", ha = "right", va = "bottom", font = font, fontsize = 16, fontweight = "bold")
+    whitePlayerTxt = ax.text(-1, 8, "", ha = "right", va = "top", font = font, fontsize = 16, fontweight = "bold")
+    blackPlayerTxt = ax.text(-1, 0, "", ha = "right", va = "bottom", font = font, fontsize = 16, fontweight = "bold")
+
+    #text object for displaying the move where the rook sac happens (game review style)
+    moveText = ax.text(10, 4, "",  ha = "right", va = "top", font = font, fontsize = 16, fontweight = "bold", wrap = True)
 
     #start with the first game
     game = rookSacGames[0]
-    goThruGame(game, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt)
+    goThruGame(game, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt, moveText)
 
     currentGame = [0]
-    nextGameBtn.on_clicked(lambda event: nextGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt))
+    nextGameBtn.on_clicked(lambda event: nextGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt, moveText))
 
-    previousGameBtn.on_clicked(lambda event: previousGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt))
+    previousGameBtn.on_clicked(lambda event: previousGame(rookSacGames, currentGame, fig, ax, columnMap, pieces, previousBtn, nextBtn, pieceTexts, whitePlayerTxt, blackPlayerTxt, moveText))
     
     ax.axis("off")
     plt.show()
