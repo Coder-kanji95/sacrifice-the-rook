@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
+import textwrap
+import webbrowser
 
 import chess
 import io
@@ -104,7 +106,7 @@ def nextTurn(fig, ax, pieceTexts, board, columnMap, pieces, moves, currentMove, 
 
         #get the move in standard chess notation (SAN) ex: Nf3 (knight to f3)
         moveNotation = board.san(move)
-
+        
         isRookSac = False
         materialGained = 0
         for rookSac in rookSacInfo:
@@ -115,8 +117,20 @@ def nextTurn(fig, ax, pieceTexts, board, columnMap, pieces, moves, currentMove, 
                 isRookSac = True
                 break
 
+        message = (
+            f"Move: {moveNotation}\n\n"
+            f"You sacrificed your ROOOOOOOOOK!\n\n"
+            f"Is it the PATH to VICTORY or the ULTIMATE BLUNDER?\n\n"
+            f"Material gained: {materialGained}"
+        )
+        
         if isRookSac == True:
-            moveTxt.set_text(f"Move: {moveNotation} \n A stunning sacrifice! You sacrificed your ROOOOOOOOOK! Is it the PATH to VICTORY or the ULTIMATE BLUNDER? \n Material gained: {materialGained}") #show on the matplotlib window 
+            moveTxt.set_text(textwrap.fill(
+                "\n\n".join(
+                    textwrap.fill(line, width=25)
+                    for line in message.split("\n\n") #list comprehension
+                )
+            )) #show on the matplotlib window 
         else:
             moveTxt.set_text(f"Move: {moveNotation}")
 
@@ -190,7 +204,7 @@ def startDisplay(rookSacs, jetBrainsNF):
     ax.set_xlim(-0.7, 8.7)
     ax.set_ylim(8.7, -0.7)
 
-    ax.set_title("Rook Sacrifice Games", fontsize=20, pad=20)
+    ax.set_title("Rook Sacrifice Games - Take My ROOOOOOOOOOOOK!", fontsize=20, pad=20)
 
     #buttons to go through moves
     #plt.axes([left, bottom, width, height])
@@ -207,13 +221,18 @@ def startDisplay(rookSacs, jetBrainsNF):
     previousGameBtn = Button(prevGame, "Previous Game")
     nextGameBtn = Button(nxtGame, "Next Game")
 
+    desc = plt.axes([0.01, 0.6, 0.1, 0.05])
+    descBtn = Button(desc, "Info about Rook Sacrifices", color="#B58863", hovercolor="#F0D9B5") 
+
+    descBtn.on_clicked(lambda event: webbrowser.open("https://chessanalysis.co/tactics/rook-sacrifice"))
+
     pieceTexts = [] #store text objects of the chess pieces
 
-    whitePlayerTxt = ax.text(-1, 8, "", ha = "right", va = "top", font = font, fontsize = 16, fontweight = "bold")
-    blackPlayerTxt = ax.text(-1, 0, "", ha = "right", va = "bottom", font = font, fontsize = 16, fontweight = "bold")
+    whitePlayerTxt = ax.text(-1, 8, "", ha = "right", va = "top", fontproperties = font, fontsize = 16, fontweight = "bold")
+    blackPlayerTxt = ax.text(-1, 0, "", ha = "right", va = "bottom", fontproperties = font, fontsize = 16, fontweight = "bold")
 
     #text object for displaying the move where the rook sac happens (game review style)
-    moveText = ax.text(10, 4, "",  ha = "right", va = "top", font = font, fontsize = 16, fontweight = "bold", wrap = True)
+    moveText = ax.text(10, 4, "",  ha = "left", va = "top", fontproperties = font, fontsize = 16, fontweight = "bold", wrap = True)
 
     #start with the first game
     game = rookSacGames[0]

@@ -234,7 +234,7 @@ ctk.set_default_color_theme("blue")
 
 #create the main window
 app = ctk.CTk()
-app.title("ROOOOOK Sac Counter")
+app.title("ROOOOOK Sac Detector")
 app.geometry("1920x1080")
 app.iconbitmap(iconPath)
 

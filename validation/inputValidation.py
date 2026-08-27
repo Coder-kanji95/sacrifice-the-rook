@@ -11,7 +11,7 @@ def titleValidation(title):
         title = title.strip() #remove unnecessary whitespace
 
         #allow letters, numbers & symbols to be input
-        allowedChrs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*():/.,'- "
+        allowedChrs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*_():/.,'- "
         symbols = "!@#$%^&*():/.,'-><[]{}\|"
 
         #check if the input is above the min length of input & not exceeding the max length
