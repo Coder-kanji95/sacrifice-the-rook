@@ -30,16 +30,23 @@ import chess.pgn
 import threading
 
 #----------------------------Sub-programs----------------------------------------
-def getFilePaths(imgPath, jetBrainsFontTTF, icon):
-    basePath = os.path.abspath(".") #gives the folder where the main file is - which is main folder btw
+def getFilePaths(imgPath, jetBrainsFontTTF, icon, rookSound):
+    try:
+        #gives the path to the temporary folder everything gets unpacked into when the exe is run. then, when u add the icon when using pyinstaller, the icon file will be present in the temp folder & can be joined with the temp folder's path to get the folder path to the icon (so it can be displayed in the ctk window)
+        basePath = sys._MEIPASS 
+    except Exception:
+        basePath = os.path.abspath(".") #gives the absolute path of ther current working directory
     
-    return os.path.join(basePath, imgPath), os.path.join(basePath, "JetBrainsMonoNF", jetBrainsFontTTF), os.path.join(basePath, icon)
+    return os.path.join(basePath, imgPath), os.path.join(basePath, "JetBrainsMonoNF", jetBrainsFontTTF), os.path.join(basePath, icon), os.path.join(basePath, rookSound)
 
-def workerThread(pInpFrame, pOutFrame, pUserEntry, app, pJetBrainsNF):
-    thread1 = threading.Thread(target=searchRookSacs, args=(pInpFrame, pOutFrame, pUserEntry, app, pJetBrainsNF))
+def workerThread(pSearchBtn, pInpFrame, pOutFrame, pUserEntry, app, pJetBrainsNF):
+    pSearchBtn.configure(state = "disabled") #disable the search [for rook sacs] button so the user doesn't accidentally start multiple threads
+
+    #start gathering game archives from Chess.com PubAPI in a seperate thread (so GUI stays responsive in the main thread)
+    thread1 = threading.Thread(target=searchRookSacs, args=(pInpFrame, pOutFrame, pUserEntry, app, pJetBrainsNF, pSearchBtn))
     thread1.start()
 
-def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app, pJetBrainsNF):
+def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app, pJetBrainsNF, pSearchBtn):
     #get the Chess.com username from the entry widget & pass it to validation
     username = pUserEntry.get().strip()
     valid = titleValidation(username)
@@ -129,7 +136,7 @@ def searchRookSacs(pInpFrame, pOutFrame, pUserEntry, app, pJetBrainsNF):
                 #list 'toReview' - contains all public games of standard chess
                 rookSacs = theBrains(pInpFrame, pOutFrame, toReview, username)
 
-                app.after(0, lambda: displayRookSacs(rookSacs, pInpFrame, username, pJetBrainsNF))
+                app.after(0, lambda: displayRookSacs(rookSacs, pInpFrame, username, pJetBrainsNF, pSearchBtn))
 
 def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
     messagebox.showinfo("Processing...", "Looking through each game for rook sacrifices... This may take a while!")
@@ -214,20 +221,21 @@ def theBrains(pInpFrame, pOutFrame, gameArchive, pUsername):
     messagebox.showinfo("Processing done!", "All public games checked for rook sacs!")
     return rookSacGames
 
-def displayRookSacs(pRookSacs, pInpFrame, pUsername, pJetBrainsNF):
+def displayRookSacs(pRookSacs, pInpFrame, pUsername, pJetBrainsNF, pSearchBtn):
     #display a label below the input box showing how rook sacs the user has
     rookSacCountLbl = ctk.CTkLabel(pInpFrame, text = f"{pUsername}, you have {len(pRookSacs)} rook sacrifices!", font = ("Comic Sans Ms", 14))
     rookSacCountLbl.grid(row = 6, column = 0, padx = 5, pady = 10)
 
-    startDisplay(pRookSacs, pJetBrainsNF)
+    pSearchBtn.configure(state = "normal") #re-enable the search button to allow entering another username
+    startDisplay(pRookSacs, pJetBrainsNF) #call the subroutine from matplotlib_chessboard.py to display games in a matplotlib figure
 
-def rookSound():
+def rookSound(pRookSoundPath):
     pygame.mixer.init()
-    pygame.mixer.music.load("sacrifices-the-rook.mp3")
+    pygame.mixer.music.load(pRookSoundPath)
     pygame.mixer.music.play()
 
 #----------------------------Main Program----------------------------------------
-imgPath, jetBrainsNF, iconPath = getFilePaths(os.path.join("absolutecinema.png"), os.path.join("JetBrainsMonoNerdFont-Regular.ttf"), os.path.join("icon.ico"))
+imgPath, jetBrainsNF, iconPath, rookSoundPath = getFilePaths(os.path.join("absolutecinema.png"), os.path.join("JetBrainsMonoNerdFont-Regular.ttf"), os.path.join("icon.ico"), os.path.join("sacrifices-the-rook.mp3"))
 
 ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
@@ -261,7 +269,7 @@ rookBtn = ctk.CTkButton(inpFrame,
                         border_width= 3,
                         border_color = "#6fb5ff",
 
-                        command = lambda: rookSound())
+                        command = lambda: rookSound(rookSoundPath))
 rookBtn.grid(row = 0, column = 0, padx = 5, pady = 10, columnspan = 2)
 
 #display a title - 'Sacrifice the rook'
@@ -289,7 +297,7 @@ descLbl.grid(row = 4, column = 0, padx = 5, pady = 10, columnspan = 2)
 userEntry = ctk.CTkEntry(inpFrame, placeholder_text = "Enter your Chess.com username...", font = ("Comic Sans Ms", 14), width = 250)
 userEntry.grid(row = 5, column = 0, padx = 5, pady = 10, sticky = "w")
 
-searchBtn = ctk.CTkButton(inpFrame, text = "Search for rook sacrifices", font = ("Comic Sans Ms", 16), command = lambda: workerThread(inpFrame, outFrame, userEntry, app, jetBrainsNF))
+searchBtn = ctk.CTkButton(inpFrame, text = "Search for rook sacrifices", font = ("Comic Sans Ms", 16), command = lambda: workerThread(searchBtn, inpFrame, outFrame, userEntry, app, jetBrainsNF))
 searchBtn.grid(row = 5, column = 1, padx = 5, pady = 10, sticky = "w")
 
 #display a noice img :)
