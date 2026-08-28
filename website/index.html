@@ -11,6 +11,20 @@
         <link rel="stylesheet" href="../fontawesome/css/all.css">
     </head>
     <body>
+        <!--JAVASCRIPT-->
+        <script>
+            <!--playRookSound function coded by ChatGPT-->
+            function playRookSound() {
+                const audio = document.getElementById("rookSound");
+
+                audio.currentTime = 0;
+                audio.play().catch(err => {
+                    console.log("Audio play was prevented:", err);
+                });
+            }
+        </script>
+        <!--JAVASCRIPT-->
+        
         <div class="container">
             <div class="flex">
                 <audio id="rookSound" src="../sacrifices-the-rook.mp3" preload="auto"></audio>
@@ -39,26 +53,13 @@
             </div>
         </div>
 
-        <div class="tooltip">
-            <i class="fa-solid fa-circle-info"></i>
-            <span class="tooltip-text"><a href="https://wallpaperaccess.com/tardis">Background: TARDIS Wallpaper</a></span>
-        </div>
+        <footer>
+            <div class="tooltip">
+                <i class="fa-solid fa-circle-info"></i>
+                <span class="tooltip-text"><a href="https://wallpaperaccess.com/tardis">Background: TARDIS Wallpaper</a></span>
+            </div>
 
-        <!--JAVASCRIPT-->
-        <script>
-            <!--playRookSound function coded by ChatGPT-->
-            function playRookSound() {
-                const audio = document.getElementById("rookSound");
-
-                audio.currentTime = 0;
-                audio.play().catch(err => {
-                    console.log("Audio play was prevented:", err);
-                });
-            }
-        </script>
-        <!--JAVASCRIPT-->
-
-        <br>
-        2026 Sacrifice The ROOOOOOOOOK! By kanji
+            <p>Sacrifice The ROOOOOOOOOK! By kanji</p>
+        </footer>
     </body>
 </html>
