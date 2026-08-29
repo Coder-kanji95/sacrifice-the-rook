@@ -4,7 +4,7 @@
 </p>
 
 ---
-<b><h1 align="center">♟️ Take My ROOOOOOOOOOK! ♟️</h1></b>
+**<h1 align="center">♟️ Take My ROOOOOOOOOOK! ♟️</h1>**
 
 <p align="center">A Python application that analyses your Chess.com games for rook sacrifices- ALL rook sacrifices (you'll see what I mean😁)</p>
 
@@ -24,7 +24,9 @@
 Anywayyy.....on to the installation.....
 
 ### 💾 Installation
-Go to the website & download the EXE for your OS (currently, it's just Windows but I'm gonna add macOS & Linux in the coming days)
+Go to the website (https://coder-kanji95.github.io/sacrifice-the-rook/) & download the EXE for your OS (currently, it's just Windows but I'm gonna add macOS & Linux in the coming days)
+
+**If you encounter any errors or trouble when trying to run the EXE, create an Issue & I'll address the problem as fast as I can :)**
 
 ### 🧑‍💻 Possible Future Updates
 - ~~Inclusion of bot games when checking for rook sacrifices~~ ✅
@@ -35,8 +37,6 @@ Go to the website & download the EXE for your OS (currently, it's just Windows b
 https://github.com/Coder-kanji95/sacrifice-the-rook/discussions 
 - You can share your thoughts & opinions under the 'General' category (and just chat :)) in the Discussions or email wrathnofnmathn@gmail.com 
 - Share ideas for features under the 'Ideas' category in the Discussion, ask questions under 'Q&A' & watch for posts from me under 'Announcements'!
-
-Alright then, head on over to the website:  (also linked in the 'About' section at the top-right)
 
 🔥🔥🔥 [https://www.youtube.com/watch?v=08jEcWKzxWU](https://www.youtube.com/watch?v=08jEcWKzxWU) 🔥🔥🔥🔥
 
